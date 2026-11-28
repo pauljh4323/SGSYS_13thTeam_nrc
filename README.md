@@ -369,7 +369,7 @@ python main.py --input <noisy dir> --output <out dir>
 
 ### 6. 선택 가중치의 validation 점수
 
-`main.py` 출력 (16-bit WAV), PESQ-WB `pesq==0.0.4` 16 kHz, SNR = 과목 정의. 코드 커밋 COMMIT_E2E (`scripts/e2e_check.py`, `torch 2.15.0` 새 venv 출력도 바이트 단위로 동일; `scripts/eval.py` 16-bit 결과 d1dc567과 같음).
+`main.py` 출력 (16-bit WAV), PESQ-WB `pesq==0.0.4` 16 kHz, SNR = 과목 정의. 코드 커밋 77001ec (`scripts/e2e_check.py`, `torch 2.15.0` 새 venv 출력도 바이트 단위로 동일; `scripts/eval.py` 16-bit 결과 d1dc567과 같음).
 val_remix = validation 쌍만으로 만든 보조 검증 세트 (잡음 재조합, 328개, `scripts/make_val_remix.py`); 체크포인트·α 선택에는 쓰지 않았습니다.
 **SNR은 PESQ와 의도적으로 교환했습니다** (4절): 목표가 PESQ-WB이므로 SNR이 입력보다 낮아도 PESQ가 가장 높은 가중치를 골랐습니다.
 `rms_norm`은 출력을 입력 레벨로 되돌리지 않으므로 SNR이 더 낮아집니다.
