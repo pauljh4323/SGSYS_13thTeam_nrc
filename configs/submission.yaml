@@ -1,20 +1,20 @@
-# Submission config (Challenge 2, deep learning; branch r2-prep) = configs/dl/gru_v8p2z3e.yaml (method/params verbatim):
-# gru_v8p2z3e = gru_v8p2z3d continued with stronger clean-side (speaker) augmentation before dynamic mixing: speed
-# perturbation (Ko et al. 2015; p 0.8, factor U[0.80, 1.20], anti-aliased polyphase resampling, cropped/padded back to
-# the length) and random EQ (p 0.8; RBJ low-shelf corner U[150, 500] Hz + high-shelf corner U[2, 5] kHz, gains
-# U[-12, +12] dB, RMS kept); full dynamic mixing and train-time rms_norm as gru_v8p2z3d; loss 0.2 cmag + 0.32 torch-pesq,
-# init weights/gru_v8p2z3d.pt, fresh Adam 5e-5, seed 3, best epoch 104 of 134 (early stop); branch exp/r2-dmix,
-# scripts/train_dpesq.py; train split only. The augmentation is training-only (not on the inference path).
+# Submission config (Challenge 2, deep learning; branch r2-prep) = configs/dl/gru_v8p2zw80.yaml (method/params verbatim):
+# gru_v8p2zw80 = WiSE-FT weight interpolation (Wortsman et al. 2022), no further training:
+#   theta = 0.2 * gru_v8p2z3e + 0.8 * gru_v8p2z6a  (alpha = 0.8, every float tensor of model_state, scripts/wise_ft.py)
+# - gru_v8p2z3e (weights/gru_v8p2z3e.pt): the previous submission, challenge train split only (speed/EQ clean augmentation,
+#   dynamic mixing, train-time rms_norm; exp/r2-dmix).
+# - gru_v8p2z6a (weights/gru_v8p2z6a.pt): z3e fine-tuned 300 epochs on external data (LibriSpeech train-clean-100 subset
+#   clean p 0.5; DEMAND/ESC-50/MUSAN train_pool noise p 0.6; docs/external_data.md), selection on validation +
+#   gen_unseen_dev + gen_multi_dev (exp/r2-ext).
+# alpha chosen on validation + gen_*_dev only (rule: max dev mean with validation delta >= -0.02; docs/exp_r2_ext.md on
+# exp/r2-ext). vs gru_v8p2z3e: validation 3.6393 (-0.014), val_remix 3.4907 (-0.005), pooled gen test (820) +0.233 (z 16.9).
 # Level mode rms_norm: the input is scaled to target_rms = 0.079130 (median whole-file RMS of the train noisy files,
 # scripts/rms_target.py) before the model; the output stays at that level (no inverse gain; peak capped at 0.99).
-# val PESQ 3.6534 / SNR 1.21 dB, val_remix 3.4961 (vs gru_v8p2z3d + rms_norm +0.0093, z 3.1); level probe
-# -30/-20/-10/0 dB 3.653 each (docs/exp_r2_dmix.md on exp/r2-dmix).
-# Fallbacks (copy their method/params here to revert): gru_v8p2z3d + rms_norm (configs/dl/gru_v8p2z3d.yaml; val 3.6359 /
-# 1.24 dB), gru_v8p2z3b + rms_norm (configs/dl/gru_v8p2z3b.yaml; val 3.6063 / 1.28 dB) and gru_v5b
-# (configs/dl/gru_v5b_off.yaml; val 2.6962 / 16.81 dB). Round-1 submission (dsp-v7) stays on main.
+# Fallbacks (copy their method/params here to revert): gru_v8p2z3e + rms_norm (configs/dl/gru_v8p2z3e.yaml; val 3.6534 /
+# 1.21 dB) and gru_v5b (configs/dl/gru_v5b_off.yaml; val 2.6962 / 16.81 dB). Round-1 submission (dsp-v7) stays on main.
 method: gru_mask
 params:
-  weights: weights/gru_v8p2z3e.pt  # resolved against the repo root, not the cwd
+  weights: weights/gru_v8p2zw80.pt  # resolved against the repo root, not the cwd
   device: cpu
   level_norm: true
   level_mode: rms_norm
