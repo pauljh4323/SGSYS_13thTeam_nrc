@@ -35,6 +35,25 @@ Still depends on the round-2 notice: every open question below; whether r2-prep 
 `r2-main` from `round1-final` (branch plan step 2); main's e2e_check stays classical-only (no ROUND setting) until round 1 closes;
 and whether README / submissions.md need a round-2 submission row (only after the team confirms a submission).
 
+## Status 2026-11-29: r2-prep submission -> gru_v8p2zw80 (WiSE-FT blend of z3e and z6a) + rms_norm (tag r2-ready moved)
+- gru_v8p2zw80 = 0.2 * gru_v8p2z3e + 0.8 * gru_v8p2z6a over every float tensor (WiSE-FT, Wortsman et al. 2022;
+  scripts/wise_ft.py; no training). gru_v8p2z6a is z3e continued for 300 epochs on external data (LibriSpeech
+  train-clean-100 subset clean p 0.5, DEMAND/ESC-50/MUSAN train_pool noise p 0.6; docs/external_data.md).
+- z6a alone passed the primary rule (+0.233, z 15.8) but failed validation (-0.035) and val_remix (-0.027).
+- Alpha was chosen on validation and gen_*_dev only, by a rule fixed before the sweep: the highest dev mean among the
+  alphas with validation delta >= -0.02. That gave alpha 0.8 (all of 0.2-0.8 qualified).
+- vs z3e:
+  - pooled gen test (820): +0.2334 ± 0.0138 (z 16.9);
+  - validation 3.6393 (-0.0141);
+  - val_remix 3.4907 (-0.0054);
+  - G_low -0.0051;
+  - probe 3.639 at all four levels.
+- All four round-2 conditions pass (docs/exp_r2_ext.md on exp/r2-ext). The promotion came via promote/r2-v8p2zw80,
+  with no inference-code change. It brings weights/gru_v8p2zw80.pt, weights/gru_v8p2z6a.pt, their configs,
+  scripts/wise_ft.py and docs/external_data.md. The fallbacks are gru_v8p2z3e and gru_v5b.
+- The trade-off is deliberate. The hidden test includes unseen noise types, and this blend keeps z6a's unseen-noise
+  gain while staying within 0.015 of z3e on the challenge distribution.
+
 ## Status 2026-11-25 (later): r2-prep submission -> gru_v8p2z3e + level mode rms_norm (tag r2-ready moved)
 
 - gru_v8p2z3e continues gru_v8p2z3d with the same loss, full dynamic mixing and train-time rms_norm (weights only,
