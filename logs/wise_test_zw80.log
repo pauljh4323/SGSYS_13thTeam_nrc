@@ -1,0 +1,24 @@
+=== val_remix 00:00:09
+            hard  48       0     3.5059    0.6799      2.1820 -2.0204 0.8816  1.3958       -5.7917
+        moderate  82       0     3.4150    0.5619      1.9592 -4.4888 0.8772  0.8276       -6.4895
+=== gen_unseen_test 00:04:48
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     3.1729    0.8077      1.7533 -4.1728 0.8529  0.9003       -1.5997
+=== gen_multi_test 00:09:28
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+           multi 164       0     2.7413    0.6339      1.6183 -5.2042 0.8076  0.7088        0.7088
+=== gen_low 00:11:58
+ERROR conda.cli.main_run:execute(149): `conda run python scripts/eval.py --config configs/dl/gru_v8p2zw80.yaml --split gen_low --jobs 1 --resume --notes exp/r2-ext WiSE-FT alpha 0.8 test` failed. (See above for error)
+=== probe -30 00:13:39
+        moderate 41       0     3.7273    0.4141      2.2112 -3.2038 0.9115  1.0857        0.8072
+(probe run: not appended to results/experiments.csv)
+=== probe -20 00:16:03
+        moderate 41       0     3.7273    0.4141      2.2112 -3.2038 0.9115  1.0857        0.1771
+(probe run: not appended to results/experiments.csv)
+=== probe -10 00:18:28
+        moderate 41       0     3.7273    0.4141      2.2112 -3.2038 0.9115  1.0857       -2.1085
+(probe run: not appended to results/experiments.csv)
+=== probe 0 00:20:52
+        moderate 41       0     3.7273    0.4141      2.2112 -3.2038 0.9115  1.0857       -9.7680
+(probe run: not appended to results/experiments.csv)
+ALLDONE 00:23:14

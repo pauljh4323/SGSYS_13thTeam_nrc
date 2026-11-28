@@ -1,6 +1,6 @@
 # exp/r2-ext: gru_v8p2z6a / gru_v8p2z6b (external clean speech + external noise) vs gru_v8p2z3e
 
-**Status: 2026-11-28. Neither run is promoted.** Both pass the primary round-2 rule, with a pooled gen-test gain of about
+**Status: 2026-11-28. Neither run is promoted. 2026-11-29: the WiSE-FT blend gru_v8p2zw80 (α 0.8 between z3e and z6a) is promoted; see the last section.** Both pass the primary round-2 rule, with a pooled gen-test gain of about
 +0.23 PESQ (z ≈ 16). Both fail two secondary rules: validation (−0.035 / −0.044 against the −0.03 bound) and val_remix
 (−0.027 / −0.025 against −0.02). r2-prep, configs/submission.yaml, the r2-ready tag and the submission repo are unchanged.
 The candidate is still gru_v8p2z3e + rms_norm.
@@ -102,3 +102,65 @@ There were 0 PESQ failures. The G_low noisy-reference crash (docs/r2_gen_suite.m
    - Interpolate weights between z3e and z6a (`w = (1 − α) w_z3e + α w_z6a`, choosing α on train or dev, never on val_remix).
    - Add a train-subset term to `select_sets`, so that selection penalises the challenge-distribution drop.
    - Train longer: the selection metric was still rising at epoch 300.
+
+## WiSE-FT blend z3e ↔ z6a (2026-11-29): gru_v8p2zw80 promoted
+Weight-space interpolation (WiSE-FT, Wortsman et al. 2022). There is no training:
+`theta = (1 − α) · z3e + α · z6a` over every float tensor of model_state, which includes the parameters and the
+feat_mean / feat_std / norm buffers. The checkpoints have no non-float tensors.
+- Script: scripts/wise_ft.py. It asserts identical keys, shapes, dtypes and model_cfg, blends in float64 and saves a
+  gru_mask_v1 checkpoint that loads with `weights_only=True`. Its metadata records α and the SHA-256 of both ends.
+- Sanity check (logs/wise_ft_sanity.txt): α 0 and α 1 give weights equal to z3e / z6a and bit-identical outputs on
+  20/20 validation files (stratified subset, rms_norm inference).
+- Configs: configs/dl/gru_v8p2zw{20..80}.yaml. Only weights/gru_v8p2zw80.pt is committed (SHA-256
+  `9dfa8c7b6cfc642963466928bf223de0594e8ce9946a6c92c66f1808e609b002`). The other α are rebuilt with
+  `python scripts/wise_ft.py --a weights/gru_v8p2z3e.pt --b weights/gru_v8p2z6a.pt --alpha 0.2 ... --out "weights/gru_v8p2zw{a}.pt"`.
+- Metrics: eval.py (`--jobs 1 --resume`, rms_norm), with rows at d1dc567. Paired analysis: `python scripts/gen/r2_wise_paired.py dev|test 80`
+  > logs/r2_wise_dev.txt / logs/r2_wise_test.txt.
+
+**α selection rule, fixed before the sweep:** among the α with validation paired Δ ≥ −0.02, take the highest mean of
+gen_unseen_dev and gen_multi_dev. The test sets were not used in the choice.
+
+### Dev sweep (PESQ; paired Δ vs z3e)
+| α | validation | G_unseen_dev | G_multi_dev | dev mean | val Δ ≥ −0.02 |
+|---|---|---|---|---|---|
+| 0 (z3e) | 3.6534 | 2.5773 | 2.0938 | 2.3356 | – |
+| 0.2 | 3.6595 (+0.0062, z +4.0) | 2.7135 (+0.136) | 2.2411 (+0.147) | 2.4773 | yes |
+| 0.3 | 3.6597 (+0.0063, z +3.0) | 2.7824 (+0.205) | 2.3182 (+0.224) | 2.5503 | yes |
+| 0.4 | 3.6594 (+0.0060, z +2.2) | 2.8431 (+0.266) | 2.3940 (+0.300) | 2.6185 | yes |
+| 0.5 | 3.6563 (+0.0029, z +0.9) | 2.9035 (+0.326) | 2.4552 (+0.361) | 2.6794 | yes |
+| 0.6 | 3.6507 (−0.0027, z −0.6) | 2.9580 (+0.381) | 2.5042 (+0.410) | 2.7311 | yes |
+| 0.7 | 3.6470 (−0.0063, z −1.4) | 2.9936 (+0.416) | 2.5398 (+0.446) | 2.7667 | yes |
+| **0.8** | 3.6393 (−0.0141, z −2.6) | 3.0173 (+0.440) | 2.5611 (+0.467) | **2.7892** | yes → **chosen** |
+| 1 (z6a) | 3.6179 (−0.0354) | 3.0393 (+0.462) | 2.5853 (+0.492) | 2.8123 | no |
+
+The dev gain is close to linear in α, but the validation cost is convex: it stays ≥ 0 up to α 0.5. So α 0.8 keeps
+95 % of z6a's dev gain at 40 % of its validation cost.
+
+### Chosen α 0.8 vs z3e (eval.py; PESQ / SNR dB; paired Δ ± SE (z))
+| set | z3e | gru_v8p2zw80 | Δ | (z6a Δ) |
+|---|---|---|---|---|
+| validation | 3.6534 / 1.20 | 3.6393 / 1.06 | −0.0141 ± 0.0054 (−2.6) | −0.0354 |
+| val_remix | 3.4961 / 1.15 | 3.4907 / 1.01 | −0.0054 ± 0.0059 (−0.9) | −0.0270 |
+| G_unseen_test (328) | 2.8349 / 1.01 | 3.1729 / 0.90 | +0.3380 ± 0.0230 (+14.7) | +0.3526 |
+| G_multi_test (164) | 2.2402 / 0.78 | 2.7413 / 0.71 | +0.5011 ± 0.0350 (+14.3) | +0.5154 |
+| G_low (328) | 2.3114 / 0.39 | 2.3062 / 0.32 | −0.0051 ± 0.0061 (−0.8) | −0.0280 |
+| **pooled gen test (820)** | | | **+0.2334 ± 0.0138 (+16.9)** | +0.2329 |
+| probe −30/−20/−10/0 dB | 3.653 × 4 | 3.6393 × 4 (range 0) | | |
+
+There were 0 PESQ failures. The gen_low eval hit the known native pesq crash on the noisy reference score
+(docs/r2_gen_suite.md) once, at file 88. `--resume` finished it on the first retry.
+
+Per SNR, the remaining cost is at the edges: validation 0 dB −0.055 and 15 dB −0.028, and val_remix 15 dB −0.034.
+At 5–10 dB the blend is level with or above z3e.
+
+### Rule (CLAUDE.md round 2)
+| criterion | gru_v8p2zw80 |
+|---|---|
+| primary: pooled gen Δ > 0, z ≥ 2 | pass (+0.233, z 16.9) |
+| validation Δ ≥ −0.03 | pass (−0.014) |
+| val_remix Δ ≥ −0.02 | pass (−0.005) |
+| probe flat | pass (range 0) |
+| **decision** | **promoted**: r2-prep via promote/r2-v8p2zw80 (e2e and export: docs/submissions.md on r2-prep) |
+
+The pooled gen-test gain equals z6a's (+0.233), and the blend gives back most of z6a's challenge-distribution loss:
+validation −0.035 → −0.014, val_remix −0.027 → −0.005 and G_low −0.028 → −0.005.

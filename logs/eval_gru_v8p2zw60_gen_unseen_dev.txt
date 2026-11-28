@@ -1,0 +1,16 @@
+gru_v8p2zw60 (gru_mask) | gen_unseen_dev n=328 | in-memory 16-bit | jobs=1 | 201.9s | PESQ failed=0 | clipped samples=0
+
+[overall]
+group   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+  all 328       0     2.9580    0.7954      1.6983 -4.6019 0.8306  0.8507       -1.6493
+
+[by target_snr_db]
+ target_snr_db  n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+       -5.0000 82       0     2.2753    0.6943      1.1967 -7.6324 0.7121  0.4533        5.4533
+        0.0000 82       0     2.7957    0.7444      1.6123 -4.7075 0.8224  0.8324        0.8324
+        5.0000 82       0     3.1952    0.6102      1.9202 -2.9507 0.8741  1.0732       -3.9268
+       10.0000 82       0     3.5660    0.4648      2.0639 -3.1169 0.9137  1.0439       -8.9561
+
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     2.9580    0.7954      1.6983 -4.6019 0.8306  0.8507       -1.6493

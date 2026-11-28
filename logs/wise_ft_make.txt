@@ -1,0 +1,7 @@
+alpha 0.20 -> weights/gru_v8p2zw20.pt sha256 c25072c2bee8876ee8a51bcec14829be4c06450c31fae90511fc040eb04303ae
+alpha 0.30 -> weights/gru_v8p2zw30.pt sha256 eab5fd9b6aa2127eea2f8debbfa580c4cf90ade885d269eadb894b5b8156ac4f
+alpha 0.40 -> weights/gru_v8p2zw40.pt sha256 5675373c6dd866a860d8f40c450a92b383de828b99085c61169db90ae6c23279
+alpha 0.50 -> weights/gru_v8p2zw50.pt sha256 181bdeca11522ee4fa621afe9e0c0693e45c6649e5e2773a900e53858a3b0cc1
+alpha 0.60 -> weights/gru_v8p2zw60.pt sha256 5931a7ab8140f43a5346b5accfb27f4b8372637818c60f2c8ada4c3e66cde7b4
+alpha 0.70 -> weights/gru_v8p2zw70.pt sha256 f0c44663dc2b6a8b89cc80f6a52311da6ab5edc345a65ba8df3cabea8efe995c
+alpha 0.80 -> weights/gru_v8p2zw80.pt sha256 9dfa8c7b6cfc642963466928bf223de0594e8ce9946a6c92c66f1808e609b002

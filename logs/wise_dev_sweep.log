@@ -1,0 +1,85 @@
+=== zw20 validation 22:50:09
+            easy 99       0     3.5718    0.5853      2.2606 -3.1140 0.9029  1.0877       -7.1446
+            hard 24       0     3.8747    0.3657      2.3430 -1.9518 0.9220  1.5875      -11.7458
+        moderate 41       0     3.7454    0.3980      2.2293 -2.8603 0.9158  1.1773       -9.6763
+=== zw20 gen_unseen_dev 22:52:27
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     2.7135    0.8842      1.4537 -4.5493 0.8169  0.8801       -1.6200
+=== zw20 gen_multi_dev 22:57:50
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+           multi 164       0     2.2411    0.5325      1.1552 -5.5321 0.7563  0.6776        0.6776
+=== zw30 validation 23:00:37
+            easy 99       0     3.5715    0.5828      2.2603 -3.1869 0.9025  1.0619       -7.1704
+            hard 24       0     3.8743    0.3681      2.3426 -2.0096 0.9215  1.5736      -11.7598
+        moderate 41       0     3.7470    0.3999      2.2309 -2.9001 0.9153  1.1672       -9.6865
+=== zw30 gen_unseen_dev 23:03:18
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     2.7824    0.8643      1.5226 -4.5358 0.8206  0.8756       -1.6244
+=== zw30 gen_multi_dev 23:08:34
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+           multi 164       0     2.3182    0.5244      1.2323 -5.4679 0.7615  0.6636        0.6636
+=== zw40 validation 23:11:22
+            easy 99       0     3.5708    0.5825      2.2596 -3.2581 0.9021  1.0438       -7.1885
+            hard 24       0     3.8769    0.3651      2.3452 -2.0643 0.9210  1.5597      -11.7737
+        moderate 41       0     3.7460    0.4014      2.2298 -2.9459 0.9150  1.1553       -9.6983
+=== zw40 gen_unseen_dev 23:14:09
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     2.8431    0.8445      1.5833 -4.5488 0.8244  0.8682       -1.6318
+=== zw40 gen_multi_dev 23:18:07
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+           multi 164       0     2.3940    0.5179      1.3080 -5.5053 0.7664  0.6487        0.6487
+=== zw50 validation 23:20:22
+            easy 99       0     3.5668    0.5816      2.2556 -3.3366 0.9016  1.0234       -7.2089
+            hard 24       0     3.8740    0.3685      2.3423 -2.1239 0.9202  1.5424      -11.7909
+        moderate 41       0     3.7450    0.4027      2.2288 -2.9982 0.9144  1.1417       -9.7120
+=== zw50 gen_unseen_dev 23:22:25
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     2.9035    0.8209      1.6437 -4.5872 0.8278  0.8612       -1.6388
+=== zw50 gen_multi_dev 23:26:17
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+           multi 164       0     2.4552    0.5173      1.3693 -5.5385 0.7708  0.6378        0.6378
+=== zw60 validation 23:28:59
+            easy 99       0     3.5599    0.5912      2.2488 -3.4873 0.9011  0.9911       -7.2412
+            hard 24       0     3.8703    0.3700      2.3386 -2.1926 0.9193  1.5211      -11.8123
+        moderate 41       0     3.7413    0.4054      2.2252 -3.0573 0.9137  1.1260       -9.7276
+=== zw60 gen_unseen_dev 23:31:43
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     2.9580    0.7954      1.6983 -4.6019 0.8306  0.8507       -1.6493
+=== zw60 gen_multi_dev 23:35:20
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+           multi 164       0     2.5042    0.5192      1.4183 -5.5149 0.7744  0.6301        0.6301
+=== zw70 validation 23:37:51
+            easy 99       0     3.5571    0.5914      2.2460 -3.6617 0.9005  0.9682       -7.2641
+            hard 24       0     3.8652    0.3727      2.3335 -2.2712 0.9184  1.4950      -11.8383
+        moderate 41       0     3.7365    0.4099      2.2203 -3.1246 0.9127  1.1076       -9.7461
+=== zw70 gen_unseen_dev 23:40:41
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     2.9936    0.7809      1.7339 -4.6724 0.8326  0.8343       -1.6657
+=== zw70 gen_multi_dev 23:47:06
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+           multi 164       0     2.5398    0.5185      1.4539 -5.5997 0.7767  0.6138        0.6138
+=== zw80 validation 23:49:55
+            easy 99       0     3.5503    0.5917      2.2391 -3.8037 0.8997  0.9517       -7.2806
+            hard 24       0     3.8562    0.3782      2.3245 -2.3589 0.9172  1.4644      -11.8689
+        moderate 41       0     3.7273    0.4141      2.2112 -3.2038 0.9115  1.0857       -9.7680
+=== zw80 gen_unseen_dev 23:52:22
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+          unseen 328       0     3.0173    0.7719      1.7576 -4.7644 0.8336  0.8132       -1.6868
+=== zw80 gen_multi_dev 23:57:08
+[by noise_difficulty]
+noise_difficulty   n  failed  pesq_mean  pesq_std  delta_pesq  si_sdr   stoi  snr_db  delta_snr_db
+           multi 164       0     2.5611    0.5168      1.4752 -5.7686 0.7782  0.5898        0.5898
+DONE 23:59:40
