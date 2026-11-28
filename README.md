@@ -151,30 +151,40 @@ python main.py
 | 팀 | 13조 잡음처리반 |
 | 회차 | 2차 챌린지 (딥러닝 허용) |
 | 태그 / 커밋 | `[태그]` / `[커밋]` (제출 시 기입; 현재 후보 = 태그 `r2-ready`) |
-| 제출 모델 | `gru_v8p2z3e` + 입력 레벨 모드 `rms_norm` (`configs/submission.yaml`, `weights/gru_v8p2z3e.pt`) |
+| 제출 모델 | `gru_v8p2zw80` + 입력 레벨 모드 `rms_norm` (`configs/submission.yaml`, `weights/gru_v8p2zw80.pt`): 미세조정한 두 가중치 `gru_v8p2z3e`와 `gru_v8p2z6a`의 가중치 공간 혼합 (WiSE-FT, α = 0.8) |
 | Python / 설치 / 추론 | Python 3.12, `pip install -r requirements.txt`, `python main.py` (1·2·5절) |
-| 학습 계보 | `gru_v5b` → `gru_v8p2` → `gru_v8p2x` → `gru_v8p2y` → `gru_v8p2z2` → `gru_v8p2z3b` → `gru_v8p2z3d` → `gru_v8p2z3e` (4절) |
-| Validation PESQ / SNR | **3.6534** / 1.21 dB (164개 파일, `main.py` 출력, `pesq==0.0.4` 광대역; 6절) |
+| 학습 계보 | `gru_v5b` → `gru_v8p2` → `gru_v8p2x` → `gru_v8p2y` → `gru_v8p2z2` → `gru_v8p2z3b` → `gru_v8p2z3d` → `gru_v8p2z3e` → `gru_v8p2z6a` (외부 데이터로 이어 학습); 제출 = 0.2 × `gru_v8p2z3e` + 0.8 × `gru_v8p2z6a` (4절) |
+| Validation PESQ / SNR | **3.6393** / 1.06 dB (164개 파일, `main.py` 출력, `pesq==0.0.4` 광대역; 6절) |
 
-**제출 가중치 선택 이유** — 다음 세 가지 근거를 모두 확인했습니다.
-1. validation: 후보 중 PESQ가 가장 높습니다 (3.6534; 직전 후보 `gru_v8p2z3d` 3.6359, 대응 차이 +0.0174, z 5.2).
-2. val_remix (체크포인트 선택에 쓰지 않은 보조 검증 세트): 직전 후보 대비 +0.0093 (z 3.1), 3.4961 (6절 선택 규칙).
-3. 일반화 세트 (`exp/r2-gen` 브랜치의 `docs/r2_gen_suite.md`; 학습에 쓰지 않은 외부 잡음 또는 학습 범위 밖 SNR로 만든 평가 전용 세트, 선택에는 쓰지 않음).
-   숨겨진 테스트에는 train/validation에 없는 잡음 종류가 포함되므로 이 세트로 일반화를 확인했습니다. PESQ:
+**제출 가중치 선택 이유** — 숨겨진 테스트에는 train/validation에 없는 잡음 종류가 포함되므로, 처음 보는 잡음에 대한 일반화를 가장 크게 올리면서
+챌린지 분포(validation, val_remix)의 손실은 정해 둔 범위 안에 두는 가중치를 골랐습니다.
+1. `gru_v8p2z6a`(`gru_v8p2z3e`를 외부 음성·잡음으로 이어 학습)는 처음 보는 잡음에서 크게 올랐지만 (G_unseen_test +0.353, G_multi_test +0.515),
+   validation −0.035, val_remix −0.027로 2차 승격 규칙의 보조 조건(−0.03, −0.02)을 넘지 못했습니다.
+2. 그래서 두 가중치를 θ = (1 − α) · `gru_v8p2z3e` + α · `gru_v8p2z6a`로 섞었습니다 (WiSE-FT, Wortsman et al. 2022; 추가 학습 없음, `scripts/wise_ft.py`).
+   α는 테스트 세트를 보기 전에 정한 규칙으로 골랐습니다: validation 대응 차이 ≥ −0.02인 α (0.2–0.8, 7개) 중 gen_unseen_dev와 gen_multi_dev 평균 PESQ가 가장 높은 α = 0.8.
+3. 선택한 α = 0.8의 직전 후보 `gru_v8p2z3e` 대비 대응 차이: 일반화 테스트 3개 세트 합산(820개) +0.233 (z 16.9; `gru_v8p2z6a`와 같은 이득),
+   validation −0.014, val_remix −0.005, G_low −0.005 (모두 1–3 SE 이내), 입력 레벨 −30/−20/−10/0 dB에서 같은 PESQ. 2차 승격 규칙(CLAUDE.md)의 네 조건을 모두 만족합니다.
+   일반화 세트(`docs/r2_gen_suite.md`, `exp/r2-gen`)는 학습·선택에 쓰지 않은 잡음(gen_test 목록)과 학습 범위 밖 SNR로 만든 평가 전용 세트입니다. PESQ:
 
-| 모델 | G_unseen_test (외부 잡음, 328) | G_multi_test (외부 잡음 2종 합성, 164) | G_low (−5/−10 dB, 328) |
-|---|---|---|---|
-| `gru_v5b` | 1.914 | 1.339 | 1.465 |
-| `gru_v8p2z3d` + rms_norm | 2.832 | 2.226 | 2.307 |
-| `gru_v8p2z4w` + rms_norm | 2.820 | 2.218 | 2.311 |
-| **`gru_v8p2z3e` + rms_norm** | **2.835** | **2.240** | **2.311** |
-
-`gru_v8p2z3e`는 세 세트 모두에서 가장 높거나 같습니다 (G_low는 `gru_v8p2z4w`와 같음).
+| 모델 | validation (164) | val_remix (328) | G_unseen_test (외부 잡음, 328) | G_multi_test (외부 잡음 2종 합성, 164) | G_low (−5/−10 dB, 328) |
+|---|---|---|---|---|---|
+| `gru_v5b` | 2.696 | 2.517 | 1.914 | 1.339 | 1.465 |
+| `gru_v8p2z3d` + rms_norm | 3.636 | 3.487 | 2.832 | 2.226 | 2.307 |
+| `gru_v8p2z3e` + rms_norm (직전 제출 후보, 예비) | 3.653 | 3.496 | 2.835 | 2.240 | 2.311 |
+| `gru_v8p2z6a` + rms_norm (α = 1) | 3.618 | 3.469 | 3.188 | 2.756 | 2.283 |
+| **`gru_v8p2zw80` + rms_norm (α = 0.8, 제출)** | **3.639** | **3.491** | **3.173** | **2.741** | **2.306** |
 
 ### 외부 자료
 
-- **외부 데이터: 현재 제출 모델에는 사용하지 않았습니다.** 학습에는 챌린지 train split만, 체크포인트 선택에는 validation만 썼습니다.
-  외부 잡음 코퍼스(DEMAND, ESC-50, MUSAN)는 `exp/r2-gen`의 일반화 평가에만 쓰며, 출처·버전·라이선스·분할은 `exp/r2-gen`의 `docs/external_data.md`에 기록했습니다.
+출처·버전·라이선스·분할·사용처 전체 기록은 `docs/external_data.md`에 있습니다. `main.py`는 외부 데이터를 읽지 않습니다 (추론 경로 밖).
+- **외부 데이터 (제출 모델 학습에 사용)**: 제출 가중치에 섞인 `gru_v8p2z6a`의 학습에 다음을 썼습니다 (`exp/r2-ext`).
+  - clean 음성: LibriSpeech train-clean-100 (Panayotov et al. 2015, https://www.openslr.org/12, CC BY 4.0)의 부분 집합 7,415개 발화 / 223명 / 22.59 h
+    (길이 ≥ 3 s, WADA-SNR ≥ 30 dB, 챌린지 train·validation clean과 지문 일치 없음, 화자당 최대 40개). 학습 샘플의 50 %에서 챌린지 train clean 대신 사용.
+  - 잡음: DEMAND (CC BY-SA 3.0), ESC-50 (CC BY-NC 3.0), MUSAN noise (CC BY 4.0)의 **train_pool** 분할만 (`splits/gen/*_train_pool.txt`, 1,987개 파일).
+    학습 샘플의 60 %에서 챌린지 train 잡음 대신 사용, SNR U(−10, 20) dB.
+  - 분할과 용도: train_pool = 학습, gen_dev (gen_unseen_dev, gen_multi_dev) = 체크포인트 선택과 α 선택, gen_test (G_unseen_test, G_multi_test, G_low) = 최종 승격 판정 전용 (학습·선택에 사용하지 않음).
+    세 분할은 파일 단위로 겹치지 않으며 로더가 이를 검사합니다 (`nrc.data.extpool.check_noise_rels`).
+  - 챌린지 validation은 체크포인트 선택에만 썼습니다. 챌린지 clean 음성은 학습 목표와 평가에만 썼습니다.
 - **공개 코드 (학습에만 사용)**: torch-pesq (audiolabs, 0.1.2, MIT 라이선스)의 `PesqLoss`를 미분 가능한 PESQ 손실로 썼고,
   torch-pesq가 쓰는 TorchAudio 함수(`Spectrogram`, `lfilter`, `Resample`)는 순수 torch로 다시 구현했습니다 (`src/nrc/tpesq.py`, `exp/r2-dpesq`).
   둘 다 추론 경로에 없으며 `requirements.txt`에도 없습니다 (`scripts/e2e_check.py`가 확인).
@@ -202,25 +212,27 @@ pip install -r requirements.txt
 
 ### 3. 모델 및 가중치 경로
 
-- 모델: `gru_v8p2z3e` — `gru_v5b`와 같은 구조(Conv2d 전단 + 양방향 GRU(BiGRU) 크기(magnitude) 마스크 추정기, 파라미터 2,373,651개 (2.37M))이며,
+- 모델: `gru_v8p2zw80` — 같은 구조의 두 가중치 `gru_v8p2z3e`(0.2)와 `gru_v8p2z6a`(0.8)를 파라미터·정규화 버퍼 단위로 선형 혼합한 가중치입니다 (WiSE-FT, `scripts/wise_ft.py`, 추가 학습 없음).
+  `gru_v8p2z3e`는 `gru_v5b`와 같은 구조(Conv2d 전단 + 양방향 GRU(BiGRU) 크기(magnitude) 마스크 추정기, 파라미터 2,373,651개 (2.37M))이며,
   `gru_v5b` 가중치를 미분 가능한 PESQ 손실로 미세조정(fine-tuning)한 `gru_v8p2` → `gru_v8p2x` → `gru_v8p2y` → `gru_v8p2z2`(학습 시 `rms_norm` + 동적 혼합) → `gru_v8p2z3b`(clean 음성 쪽 증강: 속도 변환 + 무작위 EQ, 화자 다양성) → `gru_v8p2z3d`(더 강한 증강)를
-  같은 손실로, clean 쪽 증강을 한 번 더 강하게(확률·범위 확대) 해서 더 학습한 가중치입니다 (아래 4절). 증강은 학습에만 쓰며 추론 경로에는 없습니다.
-- 가중치: `weights/gru_v8p2z3e.pt` (9.5 MB). 텐서와 기본형(str/int/float/dict)만 담긴 체크포인트이며
+  같은 손실로, clean 쪽 증강을 한 번 더 강하게(확률·범위 확대) 해서 더 학습한 가중치이고, `gru_v8p2z6a`는 `gru_v8p2z3e`를 외부 음성·잡음으로 이어 학습한 가중치입니다 (아래 4절). 증강은 학습에만 쓰며 추론 경로에는 없습니다.
+- 혼합 재현: `python scripts/wise_ft.py --a weights/gru_v8p2z3e.pt --b weights/gru_v8p2z6a.pt --alpha 0.8 --out weights/gru_v8p2zw80.pt` (α 0 / 1이 두 원본과 출력까지 바이트 단위로 같음을 `--sanity 20`으로 확인).
+- 가중치: `weights/gru_v8p2zw80.pt` (9.5 MB, SHA-256 `9dfa8c7b6cfc6429…`). 텐서와 기본형(str/int/float/dict)만 담긴 체크포인트이며
   `torch.load(path, map_location="cpu", weights_only=True)`로 읽습니다 (`src/nrc/models/gru_mask.py`의 `load_weights`; `torch 2.15.0+cpu`에서 확인).
-- 추론 설정: `configs/submission.yaml` (= `configs/dl/gru_v8p2z3e.yaml`). 가중치 경로는 저장소 폴더 기준 상대 경로입니다.
+- 추론 설정: `configs/submission.yaml` (= `configs/dl/gru_v8p2zw80.yaml`). 가중치 경로는 저장소 폴더 기준 상대 경로입니다.
 - **입력 레벨 모드 `rms_norm`** (`level_norm: true`, `level_mode: rms_norm`, `target_rms: 0.079130`):
   파일 전체 RMS로 이득 g = `target_rms` / max(RMS(noisy), 1e-6)를 구하고, g × noisy를 모델에 넣습니다.
   출력은 정규화된 레벨 그대로 저장합니다 (역이득 없음). 출력 피크가 0.99를 넘으면 파일 전체를 피크 0.99로 줄입니다.
   `target_rms` 0.079130 (−22.03 dBFS)은 train noisy 1296개 파일의 파일 전체 RMS 중앙값입니다 (`scripts/rms_target.py`, 한 번 계산해 설정에 저장).
   PESQ는 레벨에 무관하고 입출력 규칙은 샘플링 주파수·채널 수·샘플 수만 고정하므로, 출력 레벨은 자유롭게 정할 수 있습니다.
-  이 모드에서는 모델 입력이 입력 레벨과 무관해집니다. 그래서 입력 이득 −30/−20/−10/0 dB에서 모두 같은 PESQ (3.653)가 나옵니다.
-  `gru_v8p2z3e`는 학습 때도 같은 `rms_norm`을 적용했으므로 (입력 이득 증강 없음) 이 모드로만 사용합니다.
-- 예비(fallback): 직전 후보 `gru_v8p2z3d` + `rms_norm` (`configs/dl/gru_v8p2z3d.yaml`, `weights/gru_v8p2z3d.pt`, validation PESQ 3.6359 / SNR 1.24 dB),
+  이 모드에서는 모델 입력이 입력 레벨과 무관해집니다. 그래서 입력 이득 −30/−20/−10/0 dB에서 모두 같은 PESQ (3.639)가 나옵니다.
+  `gru_v8p2z3e`와 `gru_v8p2z6a` 모두 학습 때도 같은 `rms_norm`을 적용했으므로 (입력 이득 증강 없음) 이 모드로만 사용합니다.
+- 예비(fallback): 직전 제출 후보 `gru_v8p2z3e` + `rms_norm` (`configs/dl/gru_v8p2z3e.yaml`, `weights/gru_v8p2z3e.pt`, validation PESQ 3.6534 / SNR 1.21 dB)와 `gru_v5b` (`configs/dl/gru_v5b_off.yaml`, `weights/gru_v5b.pt`, validation PESQ 2.6962 / SNR 16.81 dB).
+  그 외 이전 후보 `gru_v8p2z3d` + `rms_norm` (`configs/dl/gru_v8p2z3d.yaml`, `weights/gru_v8p2z3d.pt`, validation PESQ 3.6359 / SNR 1.24 dB),
   `gru_v8p2z3b` + `rms_norm` (`configs/dl/gru_v8p2z3b.yaml`, `weights/gru_v8p2z3b.pt`, validation PESQ 3.6063 / SNR 1.28 dB),
   `gru_v8p2z2` + `rms_norm` (`configs/dl/gru_v8p2z2.yaml`, `weights/gru_v8p2z2.pt`, validation PESQ 3.5452 / SNR 1.35 dB),
   `gru_v8p2y` + `rms_norm` (`configs/dl/gru_v8p2y_rmsn.yaml`, `weights/gru_v8p2y.pt`, validation PESQ 3.5077 / SNR 1.88 dB),
-  `gru_v5b` (`configs/dl/gru_v5b_off.yaml`, `weights/gru_v5b.pt`, validation PESQ 2.6962 / SNR 16.81 dB).
-  `weights/gru_v8p2x.pt` (`configs/dl/gru_v8p2x_rmsn.yaml`, validation PESQ 3.4867), `weights/gru_v8p2.pt` (`configs/dl/gru_v8p2.yaml`, validation PESQ 3.3983)도 저장소에 남아 있습니다.
+  `weights/gru_v8p2z6a.pt` (`configs/dl/gru_v8p2z6a.yaml`, 혼합의 α = 1 쪽, validation PESQ 3.6179), `weights/gru_v8p2x.pt` (`configs/dl/gru_v8p2x_rmsn.yaml`, validation PESQ 3.4867), `weights/gru_v8p2.pt` (`configs/dl/gru_v8p2.yaml`, validation PESQ 3.3983)도 저장소에 남아 있습니다.
   되돌릴 때는 해당 설정 파일의 `method`/`params`를 `configs/submission.yaml`에 그대로 복사합니다.
 - 추론 코드는 `rms_norm` 모드 추가 외에는 `gru_v5b`와 같습니다. 레벨 정규화를 끈 경우의 출력은 바이트 단위로 동일함을 확인했습니다.
 - 구현: `src/nrc/models/gru_mask.py` (모델), `src/nrc/methods/gru_mask.py` (추론), `main.py` (입출력).
@@ -231,10 +243,10 @@ pip install -r requirements.txt
 ### 4. 학습 설정 (seed, epoch, 주요 설정)
 
 학습과 추론은 분리되어 있습니다. 학습 코드(`scripts/train.py`, `src/nrc/losses.py`, `src/nrc/data/`, `notebooks/colab_train.ipynb`)는 `dl-main` 브랜치에 있고,
-`r2-prep`에는 추론 코드와 학습된 가중치만 있습니다. 학습 데이터는 챌린지 train split만 사용했습니다 (사전학습 모델·외부 데이터 없음,
+`r2-prep`에는 추론 코드와 학습된 가중치만 있습니다. 1–11단계는 챌린지 train split만, 12단계는 여기에 외부 음성·잡음(위 "외부 자료")을 더해 학습했습니다 (사전학습 모델 없음,
 validation은 체크포인트 선택에만 사용, clean 음성은 학습 목표·평가에만 사용). 학습 환경: Google Colab T4 GPU.
 
-제출 가중치 `gru_v8p2z3e`는 11단계로 학습했습니다.
+제출 가중치 `gru_v8p2zw80`은 11단계 가중치 `gru_v8p2z3e`와 12단계 가중치 `gru_v8p2z6a`를 13단계에서 혼합한 것입니다.
 1–4단계는 `gru_v5b` 학습(`dl-main`)이고, 5–7단계는 미분 가능한 PESQ 미세조정(`exp/r2-dpesq`), 8단계는 같은 미세조정에 학습 시 `rms_norm`과 동적 혼합을 더한 것,
 9단계는 여기에 clean 쪽 증강(속도 변환 + 무작위 EQ)을 더한 것, 10단계와 11단계는 그 증강을 차례로 더 강하게 한 것입니다 (8–11단계 `exp/r2-dmix`).
 각 단계는 이전 단계의 best 가중치에서 시작합니다 (가중치 + 정규화 버퍼, optimizer/scheduler는 새로 생성).
@@ -251,7 +263,9 @@ validation은 체크포인트 선택에만 사용, clean 음성은 학습 목표
 | 8 | `configs/dl/gru_v8p2z2.yaml` (`exp/r2-dmix`) | `gru_v8p2y.pt` | 5단계와 같음 (학습 시 `rms_norm` + 동적 혼합) | 5e-5 (고정) | 200 | 147 (조기 종료) | 117 (3.5452) |
 | 9 | `configs/dl/gru_v8p2z3b.yaml` (`exp/r2-dmix`) | `gru_v8p2z2.pt` | 5단계와 같음 (8단계 + 속도 변환 + 무작위 EQ) | 5e-5 (고정) | 200 | 200 | 179 (3.6063) |
 | 10 | `configs/dl/gru_v8p2z3d.yaml` (`exp/r2-dmix`) | `gru_v8p2z3b.pt` | 5단계와 같음 (9단계보다 강한 속도 변환 + 무작위 EQ) | 5e-5 (고정) | 200 | 169 (조기 종료) | 139 (3.6359) |
-| 11 | `configs/dl/gru_v8p2z3e.yaml` (`exp/r2-dmix`) | `gru_v8p2z3d.pt` | 5단계와 같음 (10단계보다 강한 속도 변환 + 무작위 EQ) | 5e-5 (고정) | 200 | 134 (조기 종료) | **104 (3.6534)** |
+| 11 | `configs/dl/gru_v8p2z3e.yaml` (`exp/r2-dmix`) | `gru_v8p2z3d.pt` | 5단계와 같음 (10단계보다 강한 속도 변환 + 무작위 EQ) | 5e-5 (고정) | 200 | 134 (조기 종료) | 104 (3.6534) |
+| 12 | `configs/dl/gru_v8p2z6a.yaml` (`exp/r2-ext`) | `gru_v8p2z3e.pt` | 5단계와 같음 (외부 음성·잡음 혼합 + 11단계 증강) | 5e-5 (고정) | 300 | 300 | 298 (선택 지표 3.0809; validation 3.6179) |
+| 13 | `configs/dl/gru_v8p2zw80.yaml` (`exp/r2-ext`) | `gru_v8p2z3e.pt` + `gru_v8p2z6a.pt` | 학습 없음: 0.2 × 11단계 + 0.8 × 12단계 (WiSE-FT) | – | – | – | **α = 0.8 (3.6393)** |
 
 공통 설정: seed 0 (1–9단계; 10·11단계는 앞 단계와 다른 증강 난수를 쓰도록 각각 seed 2, 3, `numpy.random.default_rng(seed)` + `torch.manual_seed(seed)`), batch size 16 (3 s 구간), Adam, grad clip 5.0,
 크기 압축 지수 0.3, MR-STFT 해상도 256/512/1024 (hop 64/128/256), 2 epoch마다 validation 전체 PESQ로 평가,
@@ -261,7 +275,7 @@ ReduceLROnPlateau (factor 0.5, patience 3회, 최소 lr 1e-5), 조기 종료 = 8
 5–6단계도 4단계와 같은 데이터 증강(같은 재조합 배치 흐름)을 씁니다. 7단계는 입력 이득만 모든 샘플(원본 쌍 포함)에 U(−40, +6) dB 하나로 바꿨습니다 (clean·잡음 같은 이득, 피크 0.99 제한).
 8단계는 원본 쌍과 입력 이득 증강을 쓰지 않고 모든 샘플을 동적 혼합으로 만든 뒤 `rms_norm`을 적용합니다 (아래).
 9단계는 8단계와 같은 데이터 흐름에서, 혼합 전에 clean 음성에 속도 변환과 무작위 EQ를 적용합니다 (아래). 10·11단계는 9단계와 같고 증강 확률·범위만 넓혔습니다 (아래).
-선택 가중치까지의 누적 학습량: 148 + 76 + 48 + 8 + 99 + 194 + 153 + 117 + 179 + 139 + 104 = 1265 epoch. GPU 학습은 cuDNN 비결정성 때문에 같은 seed로도 비트 단위 재현은 보장되지 않습니다.
+선택 가중치까지의 누적 학습량: 148 + 76 + 48 + 8 + 99 + 194 + 153 + 117 + 179 + 139 + 104 = 1265 epoch (`gru_v8p2z3e`), 여기에 12단계 298 epoch (`gru_v8p2z6a`, 81 step/epoch). GPU 학습은 cuDNN 비결정성 때문에 같은 seed로도 비트 단위 재현은 보장되지 않습니다.
 
 **5–11단계: 미분 가능한 PESQ 미세조정 (`gru_v8p2`, `gru_v8p2x`, `gru_v8p2y`, `gru_v8p2z2`, `gru_v8p2z3b`, `gru_v8p2z3d`, `gru_v8p2z3e`)**
 
@@ -318,6 +332,14 @@ ReduceLROnPlateau (factor 0.5, patience 3회, 최소 lr 1e-5), 조기 종료 = 8
   8단계는 `exp/r2-dmix` 브랜치에서 `python scripts/train_dpesq.py --config configs/dl/gru_v8p2z2.yaml --data-root <데이터 폴더>`, `cp outputs/ckpt/gru_v8p2z2/best.pt weights/gru_v8p2z2.pt`입니다.
   9단계는 같은 브랜치에서 `--config configs/dl/gru_v8p2z3b.yaml`, `cp outputs/ckpt/gru_v8p2z3b/best.pt weights/gru_v8p2z3b.pt`, 10단계는 `--config configs/dl/gru_v8p2z3d.yaml`, `cp outputs/ckpt/gru_v8p2z3d/best.pt weights/gru_v8p2z3d.pt`,
   11단계는 `--config configs/dl/gru_v8p2z3e.yaml`, `cp outputs/ckpt/gru_v8p2z3e/best.pt weights/gru_v8p2z3e.pt`입니다.
+  12단계는 `exp/r2-ext` 브랜치에서 `python scripts/train_dpesq.py --config configs/dl/gru_v8p2z6a.yaml --data-root <데이터 폴더> --ext-package <외부 데이터 패키지>`
+  (패키지는 `scripts/gen/build_ext_package.py`로 생성, `docs/external_data.md`), `cp outputs/ckpt/gru_v8p2z6a/best.pt weights/gru_v8p2z6a.pt`입니다. 13단계는 3절의 `scripts/wise_ft.py` 명령입니다.
+- 12단계 (`gru_v8p2z6a`): `gru_v8p2z3e`에서 시작해(가중치만, optimizer 새로 생성) 같은 손실·학습 시 `rms_norm`·11단계 clean 증강으로 300 epoch × 81 step, seed 7로 학습했습니다.
+  동적 혼합 대신 외부 혼합을 씁니다: clean은 확률 0.5로 LibriSpeech 부분 집합(3 s 무작위 구간), 잡음은 확률 0.6으로 외부 train_pool(코퍼스 균등), SNR U(−10, 20) dB, 확률 0.3으로 두 번째 잡음(첫 잡음 대비 U(−10, 0) dB).
+  2 epoch마다 validation, gen_unseen_dev, gen_multi_dev 평균 PESQ(선택 지표)로 best를 골랐습니다 (조기 종료 20회, 발동하지 않음, best = 298 epoch). weight EMA 0.999로 학습한 `gru_v8p2z6b`는 차이가 없어 쓰지 않았습니다.
+- 13단계 (`gru_v8p2zw80`): 학습 없이 11·12단계 가중치를 α = 0.8로 혼합했습니다 (WiSE-FT, Wortsman et al. 2022). 모든 실수 텐서(파라미터와 feat_mean/feat_std 등 정규화 버퍼)에 같은 α를 씁니다.
+  α 0.2–0.8 (0.1 간격)을 validation, gen_unseen_dev, gen_multi_dev로만 평가해 1절의 규칙으로 골랐습니다. validation 손실은 α ≤ 0.5에서 0 이상이고 그 뒤로 늘어나며,
+  일반화 dev 이득은 α에 거의 비례하므로 α = 0.8에서 `gru_v8p2z6a` dev 이득의 95 %를 validation 손실의 40 %로 얻습니다 (`docs/exp_r2_ext.md`, `exp/r2-ext`).
 
 학습 재현 (`dl-main` 브랜치, 단계 순서대로, 각 단계 best 가중치를 `weights/<이름>.pt`로 복사):
 
@@ -343,53 +365,49 @@ python main.py --input <noisy dir> --output <out dir>
   `output/`에는 입력 WAV와 같은 이름의 파일만 생기며 로그 등 다른 파일은 쓰지 않습니다 (진행 정보는 화면에만 출력).
 - 16 kHz가 아닌 입력·다채널 입력도 처리하며 입력과 같은 샘플링 주파수, 채널 수, 샘플 수로 저장합니다. 처리에 실패한 파일은 원본을 복사합니다.
 - 처리 시간 (2026-11-25, Windows 11 노트북, AC 전원, 다른 앱 종료): validation 164개 파일 CPU **33.2 s** (개발 환경 5회 중앙값, 범위 25.5–44.9 s,
-  `logs/cpu_time_r2_v8p2z3e.log`), 새 pip venv (`torch 2.15.0+cpu`) 24.6 s; val_remix 328개 59.4 s. 모델 구조는 직전 후보과 같습니다.
+  `logs/cpu_time_r2_v8p2z3e.log`, 측정 모델 `gru_v8p2z3e`), 새 pip venv (`torch 2.15.0+cpu`) 24.6 s; val_remix 328개 59.4 s. `gru_v8p2zw80`은 구조·파라미터 수가 같아 연산량이 같습니다.
 
 ### 6. 선택 가중치의 validation 점수
 
-`main.py` 출력 (16-bit WAV), PESQ-WB `pesq==0.0.4` 16 kHz, SNR = 과목 정의. 코드 커밋 a1e5b9a (validation; val_remix는 로그만 추가된 8946e08; `torch 2.15.0` 새 venv 출력도 바이트 단위로 동일).
-val_remix = validation 쌍만으로 만든 보조 검증 세트 (잡음 재조합, 328개, `scripts/make_val_remix.py`); 체크포인트 선택에는 쓰지 않았습니다.
+`main.py` 출력 (16-bit WAV), PESQ-WB `pesq==0.0.4` 16 kHz, SNR = 과목 정의. 코드 커밋 COMMIT_E2E (`scripts/e2e_check.py`, `torch 2.15.0` 새 venv 출력도 바이트 단위로 동일; `scripts/eval.py` 16-bit 결과 d1dc567과 같음).
+val_remix = validation 쌍만으로 만든 보조 검증 세트 (잡음 재조합, 328개, `scripts/make_val_remix.py`); 체크포인트·α 선택에는 쓰지 않았습니다.
 **SNR은 PESQ와 의도적으로 교환했습니다** (4절): 목표가 PESQ-WB이므로 SNR이 입력보다 낮아도 PESQ가 가장 높은 가중치를 골랐습니다.
 `rms_norm`은 출력을 입력 레벨로 되돌리지 않으므로 SNR이 더 낮아집니다.
 
-| 세트 | n | PESQ noisy | PESQ gru_v5b (예비) | PESQ gru_v8p2z2 + rms_norm (예비) | PESQ gru_v8p2z3b + rms_norm (예비) | PESQ gru_v8p2z3d + rms_norm (예비) | PESQ gru_v8p2z3e + rms_norm | ΔPESQ (vs noisy) | SNR noisy (dB) | SNR gru_v8p2z3d + rms_norm (dB) | SNR gru_v8p2z3e + rms_norm (dB) |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| validation | 164 | 1.3947 | 2.6962 | 3.5452 | 3.6063 | 3.6359 | **3.6534** | +2.2587 | 9.63 | 1.24 | **1.21** |
-| val_remix | 328 | 1.3620 | 2.5170 | 3.4065 | 3.4628 | 3.4868 | 3.4961 | +2.1342 | 7.50 | 1.19 | 1.15 |
+| 세트 | n | PESQ noisy | PESQ gru_v5b (예비) | PESQ gru_v8p2z3e + rms_norm (예비) | PESQ gru_v8p2z6a + rms_norm | PESQ gru_v8p2zw80 + rms_norm | ΔPESQ (vs noisy) | SNR noisy (dB) | SNR gru_v8p2z3e + rms_norm (dB) | SNR gru_v8p2zw80 + rms_norm (dB) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| validation | 164 | 1.3947 | 2.6962 | 3.6534 | 3.6179 | **3.6393** | +2.2446 | 9.63 | 1.21 | **1.06** |
+| val_remix | 328 | 1.3620 | 2.5170 | 3.4961 | 3.4691 | 3.4907 | +2.1288 | 7.50 | 1.15 | 1.01 |
 
 **목표 SNR별 (validation)**
 
-| 목표 SNR | n | PESQ noisy | PESQ gru_v8p2z3e + rms_norm | ΔPESQ | SNR noisy (dB) | SNR gru_v8p2z3e + rms_norm (dB) | ΔSNR (dB) |
-|---|---|---|---|---|---|---|---|
-| 0 dB | 15 | 1.0796 | 3.0090 | +1.9294 | 0.00 | 0.87 | +0.87 |
-| 5 dB | 38 | 1.2181 | 3.4307 | +2.2125 | 5.00 | 1.01 | −3.99 |
-| 10 dB | 55 | 1.3575 | 3.7136 | +2.3561 | 10.00 | 1.33 | −8.67 |
-| 15 dB | 56 | 1.6354 | 3.9179 | +2.2826 | 15.00 | 1.30 | −13.70 |
+| 목표 SNR | n | PESQ noisy | PESQ gru_v8p2zw80 + rms_norm | ΔPESQ | (gru_v8p2z3e) | SNR noisy (dB) | SNR gru_v8p2zw80 + rms_norm (dB) | ΔSNR (dB) |
+|---|---|---|---|---|---|---|---|---|
+| 0 dB | 15 | 1.0796 | 2.9539 | +1.8743 | 3.0090 | 0.00 | 0.52 | +0.52 |
+| 5 dB | 38 | 1.2181 | 3.4421 | +2.2240 | 3.4307 | 5.00 | 0.91 | −4.09 |
+| 10 dB | 55 | 1.3575 | 3.7074 | +2.3499 | 3.7136 | 10.00 | 1.20 | −8.80 |
+| 15 dB | 56 | 1.6354 | 3.8898 | +2.2544 | 3.9179 | 15.00 | 1.17 | −13.83 |
 
 **잡음 난이도별 (validation)**
 
-| 난이도 | n | PESQ noisy | PESQ gru_v8p2z3e + rms_norm | ΔPESQ | SNR noisy (dB) | SNR gru_v8p2z3e + rms_norm (dB) | ΔSNR (dB) |
-|---|---|---|---|---|---|---|---|
-| easy | 99 | 1.3112 | 3.5653 | +2.2541 | 8.23 | 1.11 | −7.12 |
-| moderate | 41 | 1.5161 | 3.7387 | +2.2225 | 10.85 | 1.19 | −9.66 |
-| hard | 24 | 1.5317 | 3.8710 | +2.3393 | 13.33 | 1.61 | −11.72 |
+| 난이도 | n | PESQ noisy | PESQ gru_v8p2zw80 + rms_norm | ΔPESQ | (gru_v8p2z3e) | SNR noisy (dB) | SNR gru_v8p2zw80 + rms_norm (dB) | ΔSNR (dB) |
+|---|---|---|---|---|---|---|---|---|
+| easy | 99 | 1.3112 | 3.5503 | +2.2391 | 3.5653 | 8.23 | 0.95 | −7.28 |
+| moderate | 41 | 1.5161 | 3.7273 | +2.2112 | 3.7387 | 10.85 | 1.09 | −9.77 |
+| hard | 24 | 1.5317 | 3.8562 | +2.3245 | 3.8710 | 13.33 | 1.46 | −11.87 |
 
 입력 레벨 견고성 (validation, 입력 이득 −30/−20/−10/0 dB):
+- gru_v8p2zw80 + rms_norm: 3.639/3.639/3.639/3.639
+- gru_v8p2z6a + rms_norm: 3.618/3.618/3.618/3.618
 - gru_v8p2z3e + rms_norm: 3.653/3.653/3.653/3.653
 - gru_v8p2z3d + rms_norm: 3.636/3.636/3.636/3.636
-- gru_v8p2z3b + rms_norm: 3.606/3.606/3.606/3.606
-- gru_v8p2z2 + rms_norm: 3.545/3.545/3.545/3.545
-- gru_v8p2y + rms_norm: 3.508/3.508/3.508/3.508
 - gru_v8p2y, 레벨 정규화 끔: 2.607/3.181/3.449/3.508
-- gru_v8p2x + rms_norm: 3.487/3.487/3.487/3.487
-- gru_v8p2x, 레벨 정규화 끔: 2.640/3.194/3.437/3.488
-- gru_v8p2: 2.736/3.203/3.378/3.398
 - gru_v5b: 2.614/2.670/2.684/2.696
 
-선택 규칙: 다음 세 조건을 모두 만족하는 (모델, 레벨 모드) 조합 중 validation PESQ가 가장 높은 것을 골랐습니다.
-- validation PESQ ≥ 직전 후보 (`gru_v8p2z3d` + rms_norm 3.6359)
-- val_remix에서 직전 후보 대비 대응 차이 > 0, z ≥ 2 (`gru_v8p2z3e` + rms_norm: +0.0093, z 3.1; 함께 평가한 `gru_v8p2z4w`(hidden 384로 확장)도 +0.0120, z 3.9로 통과했으나 validation 3.6455로 낮음)
-- 모든 입력 레벨에서 직전 후보 − 0.02 (3.616) 이상
+선택 규칙 (2차 승격 규칙, CLAUDE.md): 직전 후보 `gru_v8p2z3e` + rms_norm 대비 대응 차이로 다음을 모두 만족해야 합니다.
+- 주 조건: 일반화 테스트 3개 세트(G_unseen_test + G_multi_test + G_low, 820개) 합산 차이 > 0, z ≥ 2 → +0.2334 ± 0.0138, z 16.9
+- validation 차이 ≥ −0.03 → −0.0141; val_remix 차이 ≥ −0.02 → −0.0054; 입력 레벨 견고성 평탄 → 네 레벨 모두 3.639; 전체 e2e PASS
+- 함께 평가한 `gru_v8p2z6a`(α = 1)는 주 조건을 통과했으나 validation −0.035, val_remix −0.027로 보조 조건을 넘지 못했습니다.
 
 ### 7. 절대 경로 수정 위치
 
@@ -404,9 +422,9 @@ val_remix = validation 쌍만으로 만든 보조 검증 세트 (잡음 재조�
 
 - `main.py` — 제출용 실행 파일 (`input/` → `output/`)
 - `src/nrc/` — 신호 처리 구현 (STFT, 입출력, 지표, `methods/mmse_lsa.py` 등)
-- `configs/` — 방법별 설정 파일 (`main`: `submission.yaml` = `dsp_k.yaml`; `r2-prep`: `submission.yaml` = `dl/gru_v8p2z3e.yaml`, 예비 `dl/gru_v8p2z3d.yaml`, `dl/gru_v8p2z3b.yaml`, `dl/gru_v8p2z2.yaml`, `dl/gru_v8p2y_rmsn.yaml`, `dl/gru_v5b_off.yaml`), `configs/sweeps/` 그리드 탐색 설정
-- `weights/` — 2차 챌린지 학습 가중치 (`r2-prep`: 제출 `gru_v8p2z3e.pt`, 예비 `gru_v8p2z3d.pt`, `gru_v8p2z3b.pt`, `gru_v8p2z2.pt`, `gru_v8p2y.pt`, `gru_v5b.pt`, 그 외 `gru_v8p2x.pt`, `gru_v8p2.pt`)
-- `scripts/` — 평가 (`eval.py`), 그리드 탐색 (`sweep.py`), 점검 (`selfcheck.py`, `e2e_check.py`), 보고서·그림 생성
+- `configs/` — 방법별 설정 파일 (`main`: `submission.yaml` = `dsp_k.yaml`; `r2-prep`: `submission.yaml` = `dl/gru_v8p2zw80.yaml`, 예비 `dl/gru_v8p2z3e.yaml`, `dl/gru_v8p2z6a.yaml`, `dl/gru_v8p2z3d.yaml`, `dl/gru_v8p2z3b.yaml`, `dl/gru_v8p2z2.yaml`, `dl/gru_v8p2y_rmsn.yaml`, `dl/gru_v5b_off.yaml`), `configs/sweeps/` 그리드 탐색 설정
+- `weights/` — 2차 챌린지 학습 가중치 (`r2-prep`: 제출 `gru_v8p2zw80.pt`, 예비 `gru_v8p2z3e.pt`, 혼합 원본 `gru_v8p2z6a.pt`, 그 외 `gru_v8p2z3d.pt`, `gru_v8p2z3b.pt`, `gru_v8p2z2.pt`, `gru_v8p2y.pt`, `gru_v5b.pt`, 그 외 `gru_v8p2x.pt`, `gru_v8p2.pt`)
+- `scripts/` — 평가 (`eval.py`), 가중치 혼합 (`wise_ft.py`), 그리드 탐색 (`sweep.py`), 점검 (`selfcheck.py`, `e2e_check.py`), 보고서·그림 생성
 - `docs/` — validation 결과, 제출 기록, 실험 문서, 참고 문헌, AI 활용 기록, 그림
 - `results/` — 실험 결과 기록 (`experiments.csv`)
 - `input/`, `output/` — `main.py`의 기본 입력·출력 폴더

@@ -44,7 +44,7 @@ train:
   # ema_decay: off (z6b: 0.999)
   rms_norm_target: 0.079130       # train-time rms_norm (= params.target_rms); gain augmentation off
   ext_mix:
-    package: data_ext/pkg/nrc_ext_z6  # Colab: --ext-package /content/nrc_ext_z6
+    package: data_ext/pkg/nrc_ext_z6  # Colab: --ext-package <Colab copy of the package> (notebooks/colab_train.ipynb, exp/r2-ext)
     p_libri: 0.5                  # clean: LibriSpeech subset (random 3 s crop) vs challenge train clean
     p_ext_noise: 0.6              # noise: external train_pool (corpus uniform) vs challenge train noise
     snr_db: [-10, 20]             # SNR against the total noise
