@@ -1,0 +1,21 @@
+# gru_v8p2zw70 (exp/r2-ext): WiSE-FT weight interpolation (Wortsman et al. 2022), no training:
+# theta = (1 - alpha) * gru_v8p2z3e + alpha * gru_v8p2z6a, alpha = 0.7, over every float tensor of model_state
+# (parameters + feat_mean/feat_std/norm buffers). Built by
+#   python scripts/wise_ft.py --a weights/gru_v8p2z3e.pt --b weights/gru_v8p2z6a.pt --alpha 0.7 --out weights/gru_v8p2zw70.pt
+# Inference: level_mode rms_norm (target_rms 0.079130), as both ends.
+method: gru_mask
+params:
+  weights: weights/gru_v8p2zw70.pt
+  device: cpu
+  level_norm: true
+  level_mode: rms_norm
+  target_rms: 0.079130
+
+model:            # = gru_v5b (= z3e = z6a)
+  n_fft: 512
+  hop: 128
+  hidden: 256
+  layers: 2
+  front_end: conv2d
+  conv_channels: 16
+  conv_norm: group
